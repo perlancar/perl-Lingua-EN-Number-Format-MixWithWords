@@ -50,8 +50,6 @@ sub format_number_mix {
     my %args = @_;
 
     my $f = Lingua::EN::Number::Format::MixWithWords->new(
-        decimal_point => ".",
-        thousands_sep => ",",
         num_decimal   => $args{num_decimal},
         min_format    => $args{min_format},
         min_fraction  => $args{min_fraction},
@@ -61,6 +59,8 @@ sub format_number_mix {
 
 sub new {
     my ($class, %args) = @_;
+    $args{decimal_point} //= ".";
+    $args{thousands_sep} //= ",";
     $args{names} //= {
         #2   => 'hundred',
         3   => 'thousand',
