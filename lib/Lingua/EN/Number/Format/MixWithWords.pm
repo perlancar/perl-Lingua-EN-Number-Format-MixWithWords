@@ -4,6 +4,10 @@ use 5.010;
 use strict;
 use warnings;
 
+use Math::Round qw(nearest);
+use Number::Format;
+use POSIX qw(floor log10);
+
 require Exporter;
 our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw(format_number_mix);
@@ -18,15 +22,11 @@ $SPEC{format_number_mix} = {
         num => ['num*' => {
             summary => 'The input number to format',
         }],
-        format_string => ['num*' => {
-            summary => 'sprintf() pattern to use',
-            description => <<'_',
-This can be used for example to align resulting string, e.g. "%10.2f %12s".
-_
-        }],
-        num_decimals => ['int' => {
+        num_decimal => ['int' => {
             summary => 'Number of decimal points to round',
-            default => undef,
+            description => <<'_',
+Can be negative, e.g. -1 to round to nearest 10, -2 to nearest 100, and so on.
+_
         }],
         min_format => ['num*' => {
             summary => 'Number must be larger than this to be formatted as '.
@@ -46,48 +46,114 @@ _
     },
     result_naked => 1,
 };
-sub parse_number_id {
+sub format_number_mix {
     my %args = @_;
-    my $text = $args{text};
 
-    $text =~ s/^\s+//s;
-    return undef unless length($text);
+    my $f = Lingua::EN::Number::Format::MixWithWords->new(
+        decimal_point => ".",
+        thousands_sep => ",",
+        num_decimal   => $args{num_decimal},
+        min_format    => $args{min_format},
+        min_fraction  => $args{min_fraction},
+    );
+    $f->_format($args{num});
+}
 
-    $text =~ s/^([+-]?[0-9,.]+)// or return undef;
-    my $n = _parse_mantissa($1);
-    return undef unless defined $n;
-    if ($text =~ /[Ee]([+-]?\d+)/) {
-        $n *= 10**$1;
+sub new {
+    my ($class, %args) = @_;
+    $args{names} //= {
+        #2   => 'hundred',
+        3   => 'thousand',
+        6   => 'million',
+        9   => 'billion',
+       12   => 'trillion',
+       15   => 'quadrillion',
+       18   => 'quintillion',
+       21   => 'sextillion',
+       24   => 'septillion',
+       27   => 'octillion',
+       30   => 'nonillion',
+       33   => 'decillion',
+       36   => 'undecillion',
+       39   => 'duodecillion',
+       42   => 'tredecillion',
+       45   => 'quattuordecillion',
+       48   => 'quindecillion',
+       51   => 'sexdecillion',
+       54   => 'septendecillion',
+       57   => 'octodecillion',
+       60   => 'novemdecillion',
+       63   => 'vigintillion',
+       100  => 'googol',
+       303  => 'centillion',
+    };
+    $args{min_format}   //= 1000000;
+    $args{min_fraction} //= 1;
+
+    die "Invalid min_fraction, must be 0 < x <= 1"
+        unless $args{min_fraction} > 0 && $args{min_fraction} <= 1;
+    $args{_nf} = Number::Format->new(
+        THOUSANDS_SEP => $args{thousands_sep},
+        DECIMAL_POINT => $args{decimal_point},
+    );
+    $args{powers} = [sort {$a<=>$b} keys %{$args{names}}];
+    bless \%args, $class;
+}
+
+sub _format {
+    my ($self, $num) = @_;
+    return undef unless defined $num;
+
+    if (defined $self->{num_decimal}) {
+        $num = nearest(10**-$self->{num_decimal}, $num);
     }
-    $n;
+    my ($exp, $mts, $exp_f);
+    my $anum = abs($num);
+    if ($anum) {
+        $exp   = floor(log10($anum));
+        $mts   = $anum / 10**$exp;
+        $exp_f = floor(log10($anum/$self->{min_fraction}));
+    } else {
+        $exp   = 0;
+        $mts   = 0;
+        $exp_f = 0;
+    }
+
+    my $p;
+    my ($res_n, $res_w);
+    for my $i (0..@{$self->{powers}}-1) {
+        last if $self->{powers}[$i] > $exp_f;
+        $p = $self->{powers}[$i];
+    }
+    if (defined($p) && $anum >= $self->{min_format}*$self->{min_fraction}) {
+        $res_n = $mts * 10**($exp-$p);
+        $res_w = $self->{names}{$p};
+    } else {
+        $res_n = $anum;
+        $res_w = "";
+    }
+    $res_n = $self->{_nf}->format_number($res_n, $self->{num_decimal} // 8);
+
+    ($num < 0 ? "-" : "") . $res_n . ($res_w ? " $res_w" : "");
 }
 
 1;
-# ABSTRACT: Parse number from Indonesian text
+# ABSTRACT: Format number to a mixture of numbers and words (e.g. 12.3 million)
 __END__
 
 =head1 SYNOPSIS
 
- use Parse::Number::ID qw(parse_number_id);
+ use Lingua::EN::Number::Format::MixWithWords qw(format_number_mix);
 
- my @a = map {parse_number_id(text=>$_)}
-     ("12.345,67", "-1,2e3", "x123", "1.23");
- # @a = [12345.67, -1200, undef, 1.23]
+ print format_number_mix(num => 1.23e7); # prints "12.3 million"
 
 
 =head1 DESCRIPTION
 
-This module parses numbers from text, according to Indonesian rule of decimal-
-and thousand separators ("," and "." respectively, while English uses "." and
-","). Since English numbers are more widespread, it will be parsed too whenever
-unambiguous, e.g.:
-
- 12.3     # 12.3
- 12.34    # 12.34
- 12.345   # 12345
-
-This module does not parse numbers that are written as Indonesian words, e.g.
-"seratus dua puluh tiga" (123). See L<Lingua::ID::Words2Nums> for that.
+This module formats number with English names of large numbers (thousands,
+millions, billions, and so on), e.g. 1.23e7 becomes "12.3 million". If number is
+too small or too large so it does not have any appropriate names, it will be
+formatted like a normal number.
 
 
 =head1 FUNCTIONS
@@ -97,6 +163,8 @@ None of the functions are exported by default, but they are exportable.
 
 =head1 SEE ALSO
 
-L<Lingua::ID::Words2Nums>
+L<Lingua::EN::Numbers>
+
+L<Number::Format>
 
 =cut
