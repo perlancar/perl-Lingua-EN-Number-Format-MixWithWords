@@ -19,7 +19,7 @@ our %SPEC;
 $SPEC{format_number_mix} = {
     summary => '',
     args    => {
-        num => ['num*' => {
+        num => ['float*' => {
             summary => 'The input number to format',
         }],
         num_decimal => ['int' => {
@@ -28,12 +28,12 @@ $SPEC{format_number_mix} = {
 Can be negative, e.g. -1 to round to nearest 10, -2 to nearest 100, and so on.
 _
         }],
-        min_format => ['num*' => {
+        min_format => ['float*' => {
             summary => 'Number must be larger than this to be formatted as '.
                 'mixture of number and word',
             default => 1000000,
         }],
-        min_fraction => ['num*' => {
+        min_fraction => ['float*' => {
             summary => 'Whether smaller number can be formatted with 0,x',
             description => <<_,
 If min_fraction is 1 (the default) or 0.9, 800000 won't be formatted as 0.9
