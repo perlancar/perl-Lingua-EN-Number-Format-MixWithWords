@@ -1,5 +1,15 @@
 Revision history for Lingua-EN-Number-Format-MixWithWords
 
+0.02    [NEW FEATURES + INCOMPATIBLE CHANGES]
+
+        - Add required 'scale' option to support short & long scale names
+          [requested by Lars Dɪᴇᴄᴋᴏᴡ].
+
+        - Internal: refactor common code to Lingua::Base::NFM.
+
+        - Fix overflow problem with Number::Format.
+
+
 0.01    2011-09-15
 
         First release.
