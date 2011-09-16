@@ -4,12 +4,11 @@ use 5.010;
 use strict;
 use warnings;
 
-use Math::Round qw(nearest);
-use Number::Format;
-use POSIX qw(floor log10);
+use Lingua::Base::Number::Format::MixWithWords;
+use parent qw(Lingua::Base::Number::Format::MixWithWords);
 
-require Exporter;
-our @ISA       = qw(Exporter);
+use Exporter::Lite;
+
 our @EXPORT_OK = qw(format_number_mix);
 
 # VERSION
@@ -21,6 +20,14 @@ $SPEC{format_number_mix} = {
     args    => {
         num => ['float*' => {
             summary => 'The input number to format',
+        }],
+        scale => ['str*' => {
+            summary => 'Pick long or short scale names',
+            description => <<_,
+See http://en.wikipedia.org/wiki/Long_scale#Long_scale_countries_and_languages
+for details.
+_
+            in => ['short', 'long'],
         }],
         num_decimal => ['int' => {
             summary => 'Number of decimal points to round',
@@ -49,92 +56,81 @@ _
 sub format_number_mix {
     my %args = @_;
 
-    my $f = Lingua::EN::Number::Format::MixWithWords->new(
+    my $f = __PACKAGE__->new(
         num_decimal   => $args{num_decimal},
         min_format    => $args{min_format},
         min_fraction  => $args{min_fraction},
+        scale         => $args{scale},
     );
     $f->_format($args{num});
 }
+
+my $en_short_names = {
+    #2    => 'hundred',
+    3    => 'thousand',
+    6    => 'million',
+    9    => 'billion',
+    12   => 'trillion',
+    15   => 'quadrillion',
+    18   => 'quintillion',
+    21   => 'sextillion',
+    24   => 'septillion',
+    27   => 'octillion',
+    30   => 'nonillion',
+    33   => 'decillion',
+    36   => 'undecillion',
+    39   => 'duodecillion',
+    42   => 'tredecillion',
+    45   => 'quattuordecillion',
+    48   => 'quindecillion',
+    51   => 'sexdecillion',
+    54   => 'septendecillion',
+    57   => 'octodecillion',
+    60   => 'novemdecillion',
+    63   => 'vigintillion',
+    100  => 'googol',
+    303  => 'centillion',
+};
+
+my $en_long_names = {
+    #2    => 'hundred',
+    3    => 'thousand',
+    6    => 'million',
+    12   => 'billion',
+    15   => 'billiard',
+    18   => 'trillion',
+    24   => 'quadrillion',
+    30   => 'quintillion',
+    36   => 'sextillion',
+    42   => 'septillion',
+    48   => 'octillion',
+    54   => 'nonillion',
+    60   => 'decillion',
+    66   => 'undecillion',
+    72   => 'duodecillion',
+    78   => 'tredecillion',
+    84   => 'quattuordecillion',
+    90   => 'quindecillion',
+    96   => 'sexdecillion',
+    102  => 'septendecillion',
+    108  => 'octodecillion',
+    114  => 'novemdecillion',
+    120  => 'vigintillion',
+    100  => 'googol',
+    600  => 'centillion',
+};
 
 sub new {
     my ($class, %args) = @_;
     $args{decimal_point} //= ".";
     $args{thousands_sep} //= ",";
-    $args{names} //= {
-        #2   => 'hundred',
-        3   => 'thousand',
-        6   => 'million',
-        9   => 'billion',
-       12   => 'trillion',
-       15   => 'quadrillion',
-       18   => 'quintillion',
-       21   => 'sextillion',
-       24   => 'septillion',
-       27   => 'octillion',
-       30   => 'nonillion',
-       33   => 'decillion',
-       36   => 'undecillion',
-       39   => 'duodecillion',
-       42   => 'tredecillion',
-       45   => 'quattuordecillion',
-       48   => 'quindecillion',
-       51   => 'sexdecillion',
-       54   => 'septendecillion',
-       57   => 'octodecillion',
-       60   => 'novemdecillion',
-       63   => 'vigintillion',
-       100  => 'googol',
-       303  => 'centillion',
-    };
-    $args{min_format}   //= 1000000;
-    $args{min_fraction} //= 1;
-
-    die "Invalid min_fraction, must be 0 < x <= 1"
-        unless $args{min_fraction} > 0 && $args{min_fraction} <= 1;
-    $args{_nf} = Number::Format->new(
-        THOUSANDS_SEP => $args{thousands_sep},
-        DECIMAL_POINT => $args{decimal_point},
-    );
-    $args{powers} = [sort {$a<=>$b} keys %{$args{names}}];
-    bless \%args, $class;
-}
-
-sub _format {
-    my ($self, $num) = @_;
-    return undef unless defined $num;
-
-    if (defined $self->{num_decimal}) {
-        $num = nearest(10**-$self->{num_decimal}, $num);
-    }
-    my ($exp, $mts, $exp_f);
-    my $anum = abs($num);
-    if ($anum) {
-        $exp   = floor(log10($anum));
-        $mts   = $anum / 10**$exp;
-        $exp_f = floor(log10($anum/$self->{min_fraction}));
-    } else {
-        $exp   = 0;
-        $mts   = 0;
-        $exp_f = 0;
-    }
-
-    my $p;
-    my ($res_n, $res_w);
-    for my $i (0..@{$self->{powers}}-1) {
-        last if $self->{powers}[$i] > $exp_f;
-        $p = $self->{powers}[$i];
-    }
-    if (defined($p) && $anum >= $self->{min_format}*$self->{min_fraction}) {
-        $res_n = $mts * 10**($exp-$p);
-        $res_w = $self->{names}{$p};
-    } else {
-        $res_n = $anum;
-        $res_w = "";
-    }
-    $res_n = $self->{_nf}->format_number($res_n, $self->{num_decimal} // 8);
-
-    ($num < 0 ? "-" : "") . $res_n . ($res_w ? " $res_w" : "");
+    die "Please specify scale" unless $args{scale};
+    die "Invalid scale, please use short/long"
+        unless $args{scale} =~ /\A(short|long)\z/;
+    $args{names} //= ($args{scale} eq 'long' ? $en_long_names:$en_short_names);
+    # XXX should use "SUPER"
+    my $self = Lingua::Base::Number::Format::MixWithWords->new(%args);
+    bless $self, $class;
 }
 
 1;

@@ -10,6 +10,8 @@ sub test_format {
     my (%args) = @_;
     my $name = $args{name} // "num=$args{args}{num}";
 
+    $args{args}{scale} //= 'short';
+    #diag explain $args{args};
     subtest $name => sub {
         my $res;
         my $eval_err;
@@ -42,6 +44,18 @@ test_format args=>{num => 1000000, }, res => '1 million';
 test_format args=>{num => 900000, }, res => '900,000';
 test_format args=>{num => -900000, min_fraction=>0.9}, res => '-0.9 million';
 test_format args=>{num => 1234567}, res => '1.234567 million';
+
+test_format name=>'rounding large (large number not rounded)',
+    args=>{num => 1.01e17, min_format=>1e20, num_decimal=>20},
+    res => '1.01e+17';
+test_format name=>'rounding large (num_decimal limited)',
+    args=>{num => 1.000000000000001e8, min_format=>1e20, num_decimal=>20},
+    res => '100,000,000';
+
+
+test_format name=>'short 1', args=>{num => 1.2e15}, res => '1.2 quadrillion';
+test_format name=>'long 1', args=>{num => 1.3e15, scale=>'long'},
+    res => '1.3 billiard';
 
 DONE_TESTING:
 done_testing();
