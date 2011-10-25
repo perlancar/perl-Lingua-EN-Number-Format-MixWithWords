@@ -24,7 +24,11 @@ sub test_format {
         }
 
         if (exists $args{res}) {
-            is($res, $args{res}, "result");
+            if (ref($args{res}) eq 'Regexp') {
+                like($res, $args{res}, "result");
+            } else {
+                is($res, $args{res}, "result");
+            }
         }
     };
 }
@@ -47,7 +51,7 @@ test_format args=>{num => 1234567}, res => '1.234567 million';
 
 test_format name=>'rounding large (large number not rounded)',
     args=>{num => 1.01e17, min_format=>1e20, num_decimal=>20},
-    res => '1.01e+17';
+    res => qr/^1\.01e\+0*17$/i;
 test_format name=>'rounding large (num_decimal limited)',
     args=>{num => 1.000000000000001e8, min_format=>1e20, num_decimal=>20},
     res => '100,000,000';
