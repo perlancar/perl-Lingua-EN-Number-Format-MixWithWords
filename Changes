@@ -1,21 +1,27 @@
 Revision history for Lingua-EN-Number-Format-MixWithWords
 
-0.05    2012-03-23
+0.06     2013-09-09 (SHARYANTO)
 
-        No functional changes. Remove dependency on old module Sub::Spec.
-
-
-0.04    2011-10-25
-
-        No functional changes. Fix test [ct].
+         - No functional changes. Rebuild with MakeMaker instead of
+           Module::Build because the latter is deprecated from core in 5.19.
 
 
-0.03    2011-09-21
+0.05    2012-03-23 (SHARYANTO)
 
-        No functional changes. Add alias package MixWithWords::EN.
+        - No functional changes. Remove dependency on old module Sub::Spec.
 
 
-0.02    2011-09-16
+0.04    2011-10-25 (SHARYANTO)
+
+        - No functional changes. Fix test [ct].
+
+
+0.03    2011-09-21 (SHARYANTO)
+
+        - No functional changes. Add alias package MixWithWords::EN.
+
+
+0.02    2011-09-16 (SHARYANTO)
 
         [NEW FEATURES + INCOMPATIBLE CHANGES]
 
@@ -27,6 +33,6 @@ Revision history for Lingua-EN-Number-Format-MixWithWords
         - Fix overflow problem with Number::Format.
 
 
-0.01    2011-09-15
+0.01    2011-09-15 (SHARYANTO)
 
-        First release.
+        - First release.

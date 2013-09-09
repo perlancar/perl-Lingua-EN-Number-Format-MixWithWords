@@ -5,5 +5,7 @@ use Package::Rename qw(link_package);
 
 link_package "Lingua::EN::Number::Format::MixWithWords", "MixWithWords::EN";
 
+# VERSION
+
 1;
 # ABSTRACT: Alias for Lingua::EN::Number::Format::MixWithWords

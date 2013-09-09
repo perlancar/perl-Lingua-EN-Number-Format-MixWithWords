@@ -72,3 +72,6 @@ sub _format {
 }
 
 1;
+# ABSTRACT: Base class for Lingua::XX::Number::Format::MixWithWords
+
+=for Pod::Coverage ^(new)$
