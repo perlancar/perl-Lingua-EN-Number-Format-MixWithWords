@@ -17,40 +17,50 @@ our @EXPORT_OK = qw(format_number_mix);
 our %SPEC;
 
 $SPEC{format_number_mix} = {
+    v => 1.1,
     summary => 'Format number to a mixture of numbers and words (e.g. 12.3 million)',
     args    => {
-        num => ['float*' => {
+        num => {
             summary => 'The input number to format',
-        }],
-        scale => ['str*' => {
+            schema => ['float*' => {}],
+        },
+        scale => {
             summary => 'Pick long or short scale names',
             description => <<_,
 See http://en.wikipedia.org/wiki/Long_scale#Long_scale_countries_and_languages
 for details.
 _
-            in => ['short', 'long'],
-        }],
-        num_decimal => ['int' => {
+            schema => ['str*' => {
+                in => ['short', 'long'],
+            }],
+        },
+        num_decimal => {
             summary => 'Number of decimal points to round',
             description => <<'_',
 Can be negative, e.g. -1 to round to nearest 10, -2 to nearest 100, and so on.
 _
-        }],
-        min_format => ['float*' => {
+            schema => ['int' => {
+            }],
+        },
+        min_format => {
             summary => 'Number must be larger than this to be formatted as '.
                 'mixture of number and word',
+            schema => ['float*' => {
+            }],
             default => 1000000,
-        }],
-        min_fraction => ['float*' => {
+        },
+        min_fraction => {
             summary => 'Whether smaller number can be formatted with 0,x',
             description => <<_,
 If min_fraction is 1 (the default) or 0.9, 800000 won't be formatted as 0.9
 omillion but will be if min_fraction is 0.8.
 _
+            schema => ['float*' => {
+                min => 0,
+                max => 1,
+            }],
             default => 1,
-            min => 0,
-            max => 1,
-        }],
+        },
     },
     result_naked => 1,
 };
