@@ -1,5 +1,8 @@
 package Lingua::EN::Number::Format::MixWithWords;
 
+# DATE
+# VERSION
+
 use 5.010001;
 use strict;
 use warnings;
@@ -11,12 +14,10 @@ use Exporter::Lite;
 
 our @EXPORT_OK = qw(format_number_mix);
 
-# VERSION
-
 our %SPEC;
 
 $SPEC{format_number_mix} = {
-    summary => '',
+    summary => 'Format number to a mixture of numbers and words (e.g. 12.3 million)',
     args    => {
         num => ['float*' => {
             summary => 'The input number to format',
@@ -134,8 +135,7 @@ sub new {
 }
 
 1;
-# ABSTRACT: Format number to a mixture of numbers and words (e.g. 12.3 million)
-__END__
+# ABSTRACT:
 
 =head1 SYNOPSIS
 
