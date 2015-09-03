@@ -1,5 +1,8 @@
 package Lingua::Base::Number::Format::MixWithWords;
 
+# DATE
+# VERSION
+
 use 5.010;
 use strict;
 use warnings;
@@ -7,8 +10,6 @@ use warnings;
 use Math::Round qw(nearest);
 use Number::Format;
 use POSIX qw(floor ceil log10);
-
-# VERSION
 
 our %SPEC;
 
