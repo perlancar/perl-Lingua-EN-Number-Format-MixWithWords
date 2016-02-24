@@ -10,8 +10,7 @@ use warnings;
 use Lingua::Base::Number::Format::MixWithWords;
 use parent qw(Lingua::Base::Number::Format::MixWithWords);
 
-use Exporter::Lite;
-
+use Exporter qw(import);
 our @EXPORT_OK = qw(format_number_mix);
 
 our %SPEC;
